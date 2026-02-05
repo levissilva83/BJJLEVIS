@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin - Academy Jiu Jitsu</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="header admin">
+    <h1>🔐 Painel Administrativo</h1>
+    <p>Academy Jiu Jitsu</p>
+  </header>
+
+  <div class="container">
+    <div id="msg" class="mensagem"></div>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="abrir('pendentes')">Pendentes</button>
+      <button class="tab-btn" onclick="abrir('alunos')">Alunos</button>
+      <button class="tab-btn" onclick="abrir('cts')">CTs</button>
+    </div>
+
+    <!-- PENDENTES -->
+    <div id="pendentes" class="tab-content active">
+      <div class="card admin">
+        <h2>⏳ Alunos Pendentes</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>Email</th>
+              <th>Faixa</th>
+              <th>Ação</th>
+            </tr>
+          </thead>
+          <tbody id="pendentesTabela">
+            <tr><td colspan="4" style="text-align:center;">Carregando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ALUNOS -->
+    <div id="alunos" class="tab-content">
+      <div class="card admin">
+        <h2>👥 Todos os Alunos</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>Email</th>
+              <th>Faixa</th>
+              <th>Status</th>
+              <th>Grau</th>
+            </tr>
+          </thead>
+          <tbody id="alunosTabela">
+            <tr><td colspan="5" style="text-align:center;">Carregando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- CTS -->
+    <div id="cts" class="tab-content">
+      <div class="card admin">
+        <h2>🏢 Centros de Treinamento</h2>
+
+        <h3>Novo CT</h3>
+        <input type="text" id="ctNome" placeholder="Nome" class="input-field">
+        <input type="text" id="ctCidade" placeholder="Cidade" class="input-field">
+        <input type="text" id="ctEstado" placeholder="Estado" class="input-field">
+        <input type="text" id="ctResponsavel" placeholder="Responsável" class="input-field">
+        <button class="button green" onclick="addCT()">Adicionar CT</button>
+
+        <h3 style="margin-top: 30px;">CTs Cadastrados</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>Cidade</th>
+              <th>Estado</th>
+              <th>Responsável</th>
+            </tr>
+          </thead>
+          <tbody id="ctsTabela">
+            <tr><td colspan="4" style="text-align:center;">Carregando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <button class="button-logout admin" onclick="sair()">Sair</button>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    console.log("✅ admin.html carregado");
+
+    if (!localStorage.getItem('adminMode')) {
+      console.log("❌ Não é admin");
+      window.location.href = 'index.html';
+    }
+
+    function abrir(aba) {
+      console.log("Abrindo aba:", aba);
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      document.getElementById(aba).classList.add('active');
+      event.target.classList.add('active');
+
+      if (aba === 'alunos') carregarAlunos();
+      if (aba === 'cts') carregarCTs();
+    }
+
+    function msg(texto, tipo) {
+      const el = document.getElementById('msg');
+      el.className = 'mensagem ' + tipo;
+      el.textContent = texto;
+    }
+
+    // PENDENTES
+    function carregarPendentes() {
+      console.log("Carregando pendentes...");
+      chamarAPI('obterPendentes', {}, function(resultado) {
+        console.log("Pendentes:", resultado);
+        const tbody = document.getElementById('pendentesTabela');
+        tbody.innerHTML = '';
+
+        if (resultado.dados && resultado.dados.length > 0) {
+          resultado.dados.forEach(aluno => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td>${aluno.Nome}</td>
+              <td>${aluno.Email}</td>
+              <td>${aluno.Faixa}</td>
+              <td><button class="button green" onclick="aprovar('${aluno.ID}')">Aprovar</button></td>
+            `;
+            tbody.appendChild(tr);
+          });
+        } else {
+          tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Nenhum pendente</td></tr>';
+        }
+      });
+    }
+
+    function aprovar(alunoID) {
+      console.log("Aprovando:", alunoID);
+      chamarAPI('aprovarAluno', { alunoID: alunoID }, function(resultado) {
+        console.log("Resposta:", resultado);
+        if (resultado.sucesso) {
+          msg('Aprovado!', 'success');
+          carregarPendentes();
+        } else {
+          msg(resultado.mensagem, 'error');
+        }
+      });
+    }
+
+    // ALUNOS
+    function carregarAlunos() {
+      console.log("Carregando alunos...");
+      chamarAPI('obterTodosAlunos', {}, function(resultado) {
+        console.log("Alunos:", resultado);
+        const tbody = document.getElementById('alunosTabela');
+        tbody.innerHTML = '';
+
+        if (resultado.dados && resultado.dados.length > 0) {
+          resultado.dados.forEach(aluno => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td>${aluno.Nome}</td>
+              <td>${aluno.Email}</td>
+              <td>${aluno.Faixa}</td>
+              <td>${aluno.Status}</td>
+              <td>${aluno.Grau}</td>
+            `;
+            tbody.appendChild(tr);
+          });
+        } else {
+          tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Nenhum aluno</td></tr>';
+        }
+      });
+    }
+
+    // CTS
+    function carregarCTs() {
+      console.log("Carregando CTs...");
+      chamarAPI('obterTodosCTs', {}, function(resultado) {
+        console.log("CTs:", resultado);
+        const tbody = document.getElementById('ctsTabela');
+        tbody.innerHTML = '';
+
+        if (resultado.dados && resultado.dados.length > 0) {
+          resultado.dados.forEach(ct => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td>${ct.Nome}</td>
+              <td>${ct.Cidade}</td>
+              <td>${ct.Estado}</td>
+              <td>${ct.Responsavel}</td>
+            `;
+            tbody.appendChild(tr);
+          });
+        } else {
+          tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Nenhum CT</td></tr>';
+        }
+      });
+    }
+
+    function addCT() {
+      const nome = document.getElementById('ctNome').value;
+      const cidade = document.getElementById('ctCidade').value;
+      const estado = document.getElementById('ctEstado').value;
+      const responsavel = document.getElementById('ctResponsavel').value;
+
+      console.log("Adicionando CT:", nome);
+
+      if (!nome || !cidade || !estado || !responsavel) {
+        msg('Preencha todos os campos', 'error');
+        return;
+      }
+
+      msg('Adicionando...', 'info');
+
+      chamarAPI('cadastrarCT', {
+        nome: nome,
+        cidade: cidade,
+        estado: estado,
+        responsavel: responsavel
+      }, function(resultado) {
+        console.log("Resposta CT:", resultado);
+        if (resultado.sucesso) {
+          msg('CT adicionado!', 'success');
+          document.getElementById('ctNome').value = '';
+          document.getElementById('ctCidade').value = '';
+          document.getElementById('ctEstado').value = '';
+          document.getElementById('ctResponsavel').value = '';
+          carregarCTs();
+        } else {
+          msg(resultado.mensagem, 'error');
+        }
+      });
+    }
+
+    function sair() {
+      localStorage.removeItem('adminMode');
+      window.location.href = 'index.html';
+    }
+
+    // Carregar na inicialização
+    carregarPendentes();
+  </script>
+</body>
+</html>

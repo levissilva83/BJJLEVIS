@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Academy Jiu Jitsu - Login</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container-login">
+    <div class="card-login">
+      <div class="logo">
+        <h1>🥋 Academy Jiu Jitsu</h1>
+        <p>by Professor Levi Silva</p>
+      </div>
+      
+      <div class="tabs">
+        <button class="tab-btn active" onclick="mudarTab('login')">Login</button>
+        <button class="tab-btn" onclick="mudarTab('registro')">Registrar</button>
+        <button class="tab-btn" onclick="mudarTab('admin')">Admin</button>
+      </div>
+      
+      <div id="msg" class="mensagem"></div>
+      
+      <!-- ABAS -->
+      <div id="login" class="tab-content active">
+        <h2>Entrar na Sua Conta</h2>
+        <input type="email" id="email" placeholder="Email" class="input-field">
+        <input type="password" id="senha" placeholder="Senha" class="input-field">
+        <button class="button" onclick="fazerLogin()">Entrar</button>
+        <p style="margin-top: 10px; font-size: 12px; color: #666;">Teste: joao123@email.com / Senha123</p>
+      </div>
+
+      <div id="registro" class="tab-content">
+        <h2>Criar Nova Conta</h2>
+        <input type="text" id="regNome" placeholder="Nome" class="input-field">
+        <input type="email" id="regEmail" placeholder="Email" class="input-field">
+        <input type="password" id="regSenha" placeholder="Senha" class="input-field">
+        <input type="text" id="regFaixa" placeholder="Faixa (Ex: Branca)" class="input-field">
+        <input type="text" id="regCT" placeholder="CT (Ex: CT001)" class="input-field">
+        <button class="button" onclick="fazerRegistro()">Registrar</button>
+      </div>
+
+      <div id="admin" class="tab-content">
+        <h2>Acesso Admin</h2>
+        <input type="password" id="chave" placeholder="Chave de Admin" class="input-field">
+        <button class="button" onclick="entrarAdmin()">Entrar</button>
+        <p style="margin-top: 10px; font-size: 12px; color: #666;">Chave: ADMIN_LEVI_2025</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    console.log("✅ index.html carregado");
+
+    // Mudar aba
+    function mudarTab(tab) {
+      console.log("Mudando para tab:", tab);
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      document.getElementById(tab).classList.add('active');
+      event.target.classList.add('active');
+    }
+
+    // Mostrar mensagem
+    function msg(texto, tipo) {
+      console.log("MSG:", tipo, texto);
+      const el = document.getElementById('msg');
+      el.className = 'mensagem ' + tipo;
+      el.textContent = texto;
+      setTimeout(() => {
+        el.className = 'mensagem';
+      }, 4000);
+    }
+
+    // LOGIN
+    function fazerLogin() {
+      console.log("=== FAZER LOGIN ===");
+      const email = document.getElementById('email').value;
+      const senha = document.getElementById('senha').value;
+
+      console.log("Email:", email);
+      console.log("Senha:", senha);
+
+      if (!email || !senha) {
+        msg('Preencha email e senha', 'error');
+        return;
+      }
+
+      msg('Conectando...', 'info');
+
+      console.log("Chamando API...");
+      chamarAPI('login', { email: email, senha: senha }, function(resultado) {
+        console.log("Resposta recebida:", resultado);
+
+        if (resultado.sucesso) {
+          console.log("✅ Login sucesso!");
+          localStorage.setItem('alunoID', resultado.alunoID);
+          localStorage.setItem('nome', resultado.nome);
+          localStorage.setItem('email', resultado.email);
+          localStorage.setItem('faixa', resultado.faixa);
+          localStorage.setItem('grau', resultado.grau);
+          localStorage.setItem('status', resultado.status);
+          localStorage.setItem('ct', resultado.ct);
+          msg('Login OK! Redirecionando...', 'success');
+          setTimeout(() => {
+            window.location.href = 'aluno.html';
+          }, 1000);
+        } else {
+          msg(resultado.mensagem || 'Erro no login', 'error');
+        }
+      });
+    }
+
+    // REGISTRO
+    function fazerRegistro() {
+      console.log("=== FAZER REGISTRO ===");
+      const nome = document.getElementById('regNome').value;
+      const email = document.getElementById('regEmail').value;
+      const senha = document.getElementById('regSenha').value;
+      const faixa = document.getElementById('regFaixa').value;
+      const ct = document.getElementById('regCT').value;
+
+      if (!nome || !email || !senha || !faixa || !ct) {
+        msg('Preencha todos os campos', 'error');
+        return;
+      }
+
+      msg('Registrando...', 'info');
+
+      chamarAPI('registro', {
+        nome: nome,
+        email: email,
+        senha: senha,
+        faixa: faixa,
+        ct: ct
+      }, function(resultado) {
+        console.log("Resposta registro:", resultado);
+
+        if (resultado.sucesso) {
+          msg('Registrado! Aguarde aprovação.', 'success');
+          document.getElementById('regNome').value = '';
+          document.getElementById('regEmail').value = '';
+          document.getElementById('regSenha').value = '';
+          document.getElementById('regFaixa').value = '';
+          document.getElementById('regCT').value = '';
+        } else {
+          msg(resultado.mensagem || 'Erro no registro', 'error');
+        }
+      });
+    }
+
+    // ADMIN
+    function entrarAdmin() {
+      console.log("=== ENTRAR ADMIN ===");
+      const chave = document.getElementById('chave').value;
+
+      if (!chave) {
+        msg('Digite a chave', 'error');
+        return;
+      }
+
+      if (chave === 'ADMIN_LEVI_2025') {
+        console.log("✅ Chave correta!");
+        localStorage.setItem('adminMode', 'true');
+        window.location.href = 'admin.html';
+      } else {
+        msg('Chave inválida', 'error');
+      }
+    }
+
+    // Teste rápido
+    console.log("Dica: Abra o console (F12) e digite testarAPI() para testar a API");
+  </script>
+</body>
+</html>
