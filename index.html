@@ -18,34 +18,62 @@
         <button class="tab-btn active" onclick="mudarTab('login')">Login</button>
         <button class="tab-btn" onclick="mudarTab('registro')">Registrar</button>
         <button class="tab-btn" onclick="mudarTab('admin')">Admin</button>
+        <button class="tab-btn" onclick="mudarTab('teste')" style="background: #ff9800; color: white;">🧪 Teste</button>
       </div>
       
       <div id="msg" class="mensagem"></div>
       
-      <!-- ABAS -->
+      <!-- LOGIN -->
       <div id="login" class="tab-content active">
         <h2>Entrar na Sua Conta</h2>
         <input type="email" id="email" placeholder="Email" class="input-field">
         <input type="password" id="senha" placeholder="Senha" class="input-field">
         <button class="button" onclick="fazerLogin()">Entrar</button>
-        <p style="margin-top: 10px; font-size: 12px; color: #666;">Teste: joao123@email.com / Senha123</p>
+        <p style="margin-top: 10px; font-size: 12px; color: #666;">
+          Teste: joao123@email.com / Senha123
+        </p>
       </div>
 
+      <!-- REGISTRO -->
       <div id="registro" class="tab-content">
         <h2>Criar Nova Conta</h2>
         <input type="text" id="regNome" placeholder="Nome" class="input-field">
         <input type="email" id="regEmail" placeholder="Email" class="input-field">
-        <input type="password" id="regSenha" placeholder="Senha" class="input-field">
+        <input type="password" id="regSenha" placeholder="Senha (min 8 chars)" class="input-field">
         <input type="text" id="regFaixa" placeholder="Faixa (Ex: Branca)" class="input-field">
         <input type="text" id="regCT" placeholder="CT (Ex: CT001)" class="input-field">
         <button class="button" onclick="fazerRegistro()">Registrar</button>
       </div>
 
+      <!-- ADMIN -->
       <div id="admin" class="tab-content">
-        <h2>Acesso Admin</h2>
+        <h2>Acesso Administrativo</h2>
         <input type="password" id="chave" placeholder="Chave de Admin" class="input-field">
         <button class="button" onclick="entrarAdmin()">Entrar</button>
-        <p style="margin-top: 10px; font-size: 12px; color: #666;">Chave: ADMIN_LEVI_2025</p>
+        <p style="margin-top: 10px; font-size: 12px; color: #666;">
+          Chave: ADMIN_LEVI_2025
+        </p>
+      </div>
+
+      <!-- TESTE -->
+      <div id="teste" class="tab-content">
+        <h2>🧪 Teste da API</h2>
+        <p style="font-size: 12px; color: #666; margin-bottom: 15px;">
+          Verifique se a API está funcionando corretamente
+        </p>
+        <button class="button green" onclick="testarAPI()" style="margin-bottom: 10px;">
+          Testar API (Login)
+        </button>
+        <button class="button green" onclick="verificarURL()">
+          Verificar URL
+        </button>
+        <p style="margin-top: 15px; font-size: 12px; color: #666;">
+          Abra o Console (F12) para ver detalhes do teste
+        </p>
+        <div id="testeResultado" style="margin-top: 15px; padding: 10px; background: #f5f5f5; border-radius: 5px; font-size: 11px; display: none;">
+          <strong>Resultado:</strong>
+          <pre id="testeTexto" style="margin-top: 5px; max-height: 200px; overflow-y: auto;"></pre>
+        </div>
       </div>
     </div>
   </div>
@@ -54,7 +82,6 @@
   <script>
     console.log("✅ index.html carregado");
 
-    // Mudar aba
     function mudarTab(tab) {
       console.log("Mudando para tab:", tab);
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
@@ -63,7 +90,6 @@
       event.target.classList.add('active');
     }
 
-    // Mostrar mensagem
     function msg(texto, tipo) {
       console.log("MSG:", tipo, texto);
       const el = document.getElementById('msg');
@@ -71,7 +97,7 @@
       el.textContent = texto;
       setTimeout(() => {
         el.className = 'mensagem';
-      }, 4000);
+      }, 5000);
     }
 
     // LOGIN
@@ -80,9 +106,6 @@
       const email = document.getElementById('email').value;
       const senha = document.getElementById('senha').value;
 
-      console.log("Email:", email);
-      console.log("Senha:", senha);
-
       if (!email || !senha) {
         msg('Preencha email e senha', 'error');
         return;
@@ -90,9 +113,8 @@
 
       msg('Conectando...', 'info');
 
-      console.log("Chamando API...");
       chamarAPI('login', { email: email, senha: senha }, function(resultado) {
-        console.log("Resposta recebida:", resultado);
+        console.log("Resposta:", resultado);
 
         if (resultado.sucesso) {
           console.log("✅ Login sucesso!");
@@ -103,10 +125,10 @@
           localStorage.setItem('grau', resultado.grau);
           localStorage.setItem('status', resultado.status);
           localStorage.setItem('ct', resultado.ct);
-          msg('Login OK! Redirecionando...', 'success');
+          msg('Login realizado!', 'success');
           setTimeout(() => {
             window.location.href = 'aluno.html';
-          }, 1000);
+          }, 1500);
         } else {
           msg(resultado.mensagem || 'Erro no login', 'error');
         }
@@ -115,7 +137,6 @@
 
     // REGISTRO
     function fazerRegistro() {
-      console.log("=== FAZER REGISTRO ===");
       const nome = document.getElementById('regNome').value;
       const email = document.getElementById('regEmail').value;
       const senha = document.getElementById('regSenha').value;
@@ -136,8 +157,6 @@
         faixa: faixa,
         ct: ct
       }, function(resultado) {
-        console.log("Resposta registro:", resultado);
-
         if (resultado.sucesso) {
           msg('Registrado! Aguarde aprovação.', 'success');
           document.getElementById('regNome').value = '';
@@ -146,14 +165,13 @@
           document.getElementById('regFaixa').value = '';
           document.getElementById('regCT').value = '';
         } else {
-          msg(resultado.mensagem || 'Erro no registro', 'error');
+          msg(resultado.mensagem, 'error');
         }
       });
     }
 
     // ADMIN
     function entrarAdmin() {
-      console.log("=== ENTRAR ADMIN ===");
       const chave = document.getElementById('chave').value;
 
       if (!chave) {
@@ -162,7 +180,6 @@
       }
 
       if (chave === 'ADMIN_LEVI_2025') {
-        console.log("✅ Chave correta!");
         localStorage.setItem('adminMode', 'true');
         window.location.href = 'admin.html';
       } else {
@@ -170,8 +187,30 @@
       }
     }
 
-    // Teste rápido
-    console.log("Dica: Abra o console (F12) e digite testarAPI() para testar a API");
+    // Override testarAPI para mostrar resultado na página
+    const testarAPIOriginal = window.testarAPI;
+    window.testarAPI = function() {
+      const div = document.getElementById('testeResultado');
+      const pre = document.getElementById('testeTexto');
+      
+      div.style.display = 'block';
+      pre.textContent = 'Testando... Abra o Console (F12) para detalhes...';
+
+      chamarAPI('login', {
+        email: 'joao123@email.com',
+        senha: 'Senha123'
+      }, function(resultado) {
+        pre.textContent = JSON.stringify(resultado, null, 2);
+        
+        if (resultado.sucesso) {
+          console.log("✅ API está funcionando!");
+        } else {
+          console.log("❌ Erro:", resultado.mensagem);
+        }
+      });
+    };
+
+    console.log("💡 Abra o Console (F12) para ver logs detalhados");
   </script>
 </body>
 </html>
